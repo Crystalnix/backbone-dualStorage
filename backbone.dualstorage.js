@@ -47,7 +47,7 @@
     },
     isDelayed: function() {
       var _ref;
-      return (_ref = this.get('status')) === this.states.DELETE_FAILED || _ref === this.states.UPDATE_FAILED;
+      return (_ref = this.get('status')) === this.states.DELETE_FAILED || _ref === this.states.UPDATE_FAILED || _ref === this.states.CREATE_FAILED;
     }
   });
 
@@ -110,7 +110,10 @@
         }
       }).call(this);
     },
-    merge: function(newData) {
+    mergeFirstSync: function(newData) {
+      return newData;
+    },
+    mergeFullSync: function(newData) {
       return newData;
     },
     firstSync: function(options) {
@@ -123,13 +126,16 @@
       syncSuccess = (function(_this) {
         return function(response) {
           var data, method;
-          data = _this.merge(_this.parse(response));
+          data = _this.mergeFirstSync(_this.parse(response));
           event.trigger(_this.eventNames.REMOTE_SYNC_SUCCESS);
           method = options.reset ? 'reset' : 'set';
           _this[method](data, options);
           originalSuccess(_this, data, options);
           _this.trigger('sync', _this, data, options);
-          return wrapError(_this, options);
+          wrapError(_this, options);
+          return _this.save().done(function() {
+            return event.trigger(this.eventNames.SYNCHRONIZED);
+          });
         };
       })(this);
       syncError = (function(_this) {
@@ -153,27 +159,18 @@
       });
       return event;
     },
-    removeGarbage: function() {
-      var deferred, idsForRemove, options, status;
+    removeGarbage: function(delayedData) {
+      var deferred, idsForRemove, key;
       deferred = new $.Deferred();
-      idsForRemove = [];
-      status = this.states.SYNCHRONIZING;
-      options = {
-        onEnd: (function(_this) {
-          return function() {
-            return _this.indexedDB.removeBatch(idsForRemove, (function() {
-              return deferred.resolve(arguments);
-            }), (function() {
-              return deferred.reject(arguments);
-            }));
-          };
-        })(this)
-      };
-      this.indexedDB.iterate(function(data) {
-        if (data.status === status) {
-          return idsForRemove.push(data.local_id);
-        }
-      }, options);
+      key = this.indexedDB.keyPath;
+      idsForRemove = _.map(delayedData, function(item) {
+        return item[key];
+      });
+      this.indexedDB.removeBatch(idsForRemove, (function() {
+        return deferred.resolve();
+      }), (function() {
+        return deferred.reject();
+      }));
       return deferred.promise();
     },
     _getDelayedData: function(status) {
@@ -213,38 +210,39 @@
       this.getDelayedData().done((function(_this) {
         return function(delayedData) {
           var count, done;
-          console.log(CONSOLE_TAG, 'fullsync', delayedData);
+          console.log(CONSOLE_TAG, 'start full sync', delayedData);
           count = 0;
           done = function() {
             count++;
             if (count === delayedData.length) {
-              return Backbone.ajaxSync('read', _this, {
-                success: function(response) {
-                  var data;
-                  data = _this.parse(response);
-                  _this.set(data, {
-                    silent: true
-                  });
-                  return _this.markAsSynchronizing(delayedData).done(_this.removeGarbage().done(function() {
-                    return deferred.resolve();
-                  }));
-                },
-                error: function() {
-                  return deferred.reject();
-                }
+              return _this.fetch().done(function() {
+                return deferred.resolve();
               });
             }
           };
           return _.each(delayedData, function(item) {
-            var method, model;
-            method = _this.getSyncMethodsByState(item.status);
+            var method, model, status;
+            status = item.status;
+            method = _this.getSyncMethodsByState(status);
             delete item.status;
             model = new _this.model(item);
             console.log(CONSOLE_TAG, 'full sync model', item, method);
             model.url = model.getUrlForSync(_.result(_this, 'url'), method);
             return Backbone.ajaxSync(method, model, {
-              success: done,
-              error: done
+              success: (function(response) {
+                var data;
+                if (status === _this.states.DELETE_FAILED) {
+                  return _this.removeGarbage([item]).done(done());
+                } else {
+                  data = _this.mergeFullSync(_this.parse(response));
+                  delete data.status;
+                  _this.get(item[_this.indexedDB.keyPath]).set(data);
+                  return _this.indexedDB.store.put(data, done, done);
+                }
+              }),
+              error: function() {
+                return deferred.reject(item);
+              }
             });
           });
         };

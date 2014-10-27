@@ -36,7 +36,7 @@
       @get('status') is @states.SYNCHRONIZING
 
     isDelayed: () ->
-      @get('status') in [@states.DELETE_FAILED, @states.UPDATE_FAILED]
+      @get('status') in [@states.DELETE_FAILED, @states.UPDATE_FAILED, @states.CREATE_FAILED]
 
   Backbone.IndexedDB.prototype.create = (model, options) ->
     model.set('status', states.CREATE_FAILED)
@@ -77,20 +77,24 @@
         when @states.UPDATE_FAILED is state then 'update'
         when @states.DELETE_FAILED is state then 'delete'
 
-    merge: (newData) ->
+    mergeFirstSync: (newData) ->
+      newData
+
+    mergeFullSync: (newData) ->
       newData
 
     firstSync: (options = {}) ->
       originalSuccess = options.success or $.noop
       event = _.extend {}, Backbone.Events
       syncSuccess = (response) =>
-        data = @merge(@parse(response))
+        data = @mergeFirstSync(@parse(response))
         event.trigger(@eventNames.REMOTE_SYNC_SUCCESS)
         method = if options.reset then 'reset' else 'set';
         @[method](data, options);
         originalSuccess(@, data, options)
         @trigger('sync', @, data, options);
         wrapError(@, options)
+        @save().done(->event.trigger(@eventNames.SYNCHRONIZED))
 
       syncError = (error) =>
         event.trigger(@eventNames.REMOTE_SYNC_FAIL, error, options)
@@ -109,17 +113,11 @@
 
       return event
 
-    removeGarbage: () ->
+    removeGarbage: (delayedData) ->
       deferred = new $.Deferred()
-      idsForRemove = []
-      status = @states.SYNCHRONIZING
-      options =
-        onEnd: =>
-          @indexedDB.removeBatch idsForRemove, (-> deferred.resolve(arguments)), (-> deferred.reject(arguments))
-      @indexedDB.iterate((data)->
-        if data.status is status
-          idsForRemove.push data.local_id
-      , options)
+      key = @indexedDB.keyPath
+      idsForRemove = _.map(delayedData, (item) -> item[key])
+      @indexedDB.removeBatch idsForRemove, (-> deferred.resolve()), (-> deferred.reject())
       do deferred.promise
 
     _getDelayedData: (status) ->
@@ -151,25 +149,30 @@
     fullSync: () ->
       deferred = new $.Deferred()
       @getDelayedData().done((delayedData)=>
-        console.log CONSOLE_TAG, 'fullsync', delayedData
+        console.log CONSOLE_TAG, 'start full sync', delayedData
         count = 0
         done = () =>
           count++
           if count is delayedData.length
-            Backbone.ajaxSync('read', @, success: (response) =>
-              data = @parse(response)
-              @set(data, silent: yes)
-              @markAsSynchronizing(delayedData).done(@removeGarbage().done(->deferred.resolve()))
-            , error: -> deferred.reject())
+            @fetch().done(->deferred.resolve())
 
         _.each(delayedData, (item) =>
-          method = @getSyncMethodsByState(item.status)
+          status = item.status
+          method = @getSyncMethodsByState(status)
           delete item.status
           model = new @model(item)
           console.log CONSOLE_TAG, 'full sync model', item, method
           model.url = model.getUrlForSync(_.result(@, 'url'), method)
 
-          Backbone.ajaxSync(method, model, success: done, error: done)
+          Backbone.ajaxSync(method, model, success: ((response)=>
+            if status is @states.DELETE_FAILED
+              @removeGarbage([item]).done(done())
+            else
+              data = @mergeFullSync(@parse(response))
+              delete data.status
+              @get(item[@indexedDB.keyPath]).set(data)
+              @indexedDB.store.put(data, done, done)
+          ), error: ->deferred.reject(item))
         )
       )
 
