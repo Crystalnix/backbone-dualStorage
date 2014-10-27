@@ -30,6 +30,6 @@
     "backbone": "1.1.2",
     "idbwrapper": "1.4.1",
     "jquery": "2.1.1",
-    "backbone-idb": "git@github.com:alexey-shaposhnikov/backbone-idb.git#~0.2.8"
+    "backbone-idb": "git@github.com:alexey-shaposhnikov/backbone-idb.git#~0.2.9"
   }
 }
