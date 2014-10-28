@@ -183,20 +183,3 @@
       @indexedDB.saveAll((-> deferred.resolve()), (-> deferred.reject()))
       do deferred.promise
 
-    markAsSynchronizing: (delayedData) ->
-      deferred = new $.Deferred()
-
-      map = (item) =>
-        item.status = @states.SYNCHRONIZING
-        deferred = new $.Deferred()
-        @indexedDB.store.put(item, (-> deferred.resolve()), (->deferred.reject()))
-        deferred.promise()
-
-      console.log CONSOLE_TAG, 'start to mark as synchronizing', delayedData
-      deferreds = _.map(delayedData, map)
-      $.when.apply($, deferreds).done(->
-        console.log CONSOLE_TAG, 'mark successful', delayedData
-        deferred.resolve(delayedData)
-      ).fail(->console.warn CONSOLE_TAG, 'could not mark as sync', arguments)
-
-      deferred.promise()

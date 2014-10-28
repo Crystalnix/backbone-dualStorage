@@ -258,31 +258,6 @@
         return deferred.reject();
       }));
       return deferred.promise();
-    },
-    markAsSynchronizing: function(delayedData) {
-      var deferred, deferreds, map;
-      deferred = new $.Deferred();
-      map = (function(_this) {
-        return function(item) {
-          item.status = _this.states.SYNCHRONIZING;
-          deferred = new $.Deferred();
-          _this.indexedDB.store.put(item, (function() {
-            return deferred.resolve();
-          }), (function() {
-            return deferred.reject();
-          }));
-          return deferred.promise();
-        };
-      })(this);
-      console.log(CONSOLE_TAG, 'start to mark as synchronizing', delayedData);
-      deferreds = _.map(delayedData, map);
-      $.when.apply($, deferreds).done(function() {
-        console.log(CONSOLE_TAG, 'mark successful', delayedData);
-        return deferred.resolve(delayedData);
-      }).fail(function() {
-        return console.warn(CONSOLE_TAG, 'could not mark as sync', arguments);
-      });
-      return deferred.promise();
     }
   });
 
