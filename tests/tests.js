@@ -65,8 +65,8 @@ QUnit.asyncTest("Load remote data via first sync and existing local data", funct
                 collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
                     collection.indexedDB.store.deleteDatabase();
                     assert.ok(collection.length === 5, "Items were fetched and merged");
-                    assert.ok(collection.get(1).get('name') === name, "Name is " + name);
-                    assert.ok(collection.get(2).get('name') !== name, "Name not is " + name);
+                    assert.ok(collection.get(model1.id).get('name') === name, "Name is " + name);
+                    assert.ok(collection.get(model2.id).get('name') !== name, "Name not is " + name);
                     QUnit.start();
                     $.mockjax.clear()
                 });
@@ -88,18 +88,18 @@ QUnit.asyncTest("Get delayed data", function (assert) {
         });
         
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
-            var dude = collection.get(1).toJSON();
+            var dude = collection.at(1).toJSON();
             delete dude.id;
             delete dude.local_id;
             var model = collection.create(dude);
             model.once('sync', function () {
 
-                var model2 = collection.get(2);
+                var model2 = collection.at(2);
                 var name = "Ivan";
                 model2.save('name', name).done(function () {
                     model2.fetch().done(function () {
 
-                        var model3 = collection.get(3);
+                        var model3 = collection.at(3);
                         model3.destroy().done(function () {
                             collection.fetch().done(function () {
                                 collection.getDelayedData().done(function (data) {
@@ -131,8 +131,8 @@ QUnit.asyncTest("Load remote data via first sync", function (assert) {
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
             collection.indexedDB.store.deleteDatabase();
             assert.ok(collection.length === 4, "items were fetched");
-            assert.ok(collection.get(1).get('name') === "John", "name is John");
-            assert.ok(collection.get(1).get('IQ') === null, "IQ is null");
+            assert.ok(collection.at(0).get('name') === "John", "name is John");
+            assert.ok(collection.at(0).get('IQ') === null, "IQ is null");
             QUnit.start();
             $.mockjax.clear()
         });
@@ -150,12 +150,12 @@ QUnit.asyncTest("Creating the model", function (assert) {
         });
         
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
-            var dude = collection.get(1).toJSON();
+            var dude = collection.at(1).toJSON();
             delete dude.id;
             delete dude.local_id;
             var model = collection.create(dude);
             model.once('sync', function () {
-                assert.ok(model.get('local_id') === 5, "Local id should be defined");
+                assert.ok(model.get('local_id') !== void 0, "Local id should be defined");
                 assert.ok(model.get('local_id') === model.id, "Local id should be same as model id");
                 assert.ok(model.get('id') === void 0, "Remote id should be undefined");
                 assert.ok(model.get('status') === collection.states.CREATE_FAILED, "Status should be 'create failed'");
@@ -179,7 +179,7 @@ QUnit.asyncTest("Updating the new model", function (assert) {
         });
         
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
-            var dude = collection.get(1).toJSON();
+            var dude = collection.at(1).toJSON();
             delete dude.id;
             delete dude.local_id;
             var model = collection.create(dude);
@@ -187,7 +187,7 @@ QUnit.asyncTest("Updating the new model", function (assert) {
                 var name = "Ivan";
                 model.save('name', name).done(function () {
                     model.fetch().done(function () {
-                        assert.ok(model.get('local_id') === 5, "Local id should be defined");
+                        assert.ok(model.get('local_id') !== void 0, "Local id should be defined");
                         assert.ok(model.get('local_id') === model.id, "Local id should be same as model id");
                         assert.ok(model.get('id') === void 0, "Remote id should be undefined");
                         assert.ok(model.get('name') === name, "Name should be changed");
@@ -215,7 +215,7 @@ QUnit.asyncTest("Updating the existing model", function (assert) {
         });
         
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
-            var model = collection.get(1);
+            var model = collection.at(1);
             var name = "Ivan";
             model.save('name', name).done(function () {
                 model.fetch().done(function () {
@@ -246,7 +246,7 @@ QUnit.asyncTest("Deleting the model", function (assert) {
         });
         
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
-            var model = collection.get(1);
+            var model = collection.at(1);
             var len = collection.length;
             model.destroy().done(function () {
                 collection.fetch().done(function () {
