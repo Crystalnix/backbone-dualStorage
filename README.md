@@ -37,7 +37,9 @@ example:
         console.log('idb:ready');
         collection.firstSync().once(collection.eventNames.LOCAL_SYNC_SUCCESS, function () {
             console.log('fetched from local', collection.toJSON());
-            collection.create({name: 'asd'}).save().done(function () {
+
+            // {wait: true} is very important because we should wait for adding id
+            collection.create({name: 'asd'}, {wait: true}).save().done(function () {
                 console.log('create one item, saved locally');
                 collection.fullSync().done(function () {
                     console.log('synchronized successfully');
