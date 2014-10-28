@@ -31,5 +31,9 @@
     "idbwrapper": "1.4.1",
     "jquery": "2.1.1",
     "backbone-idb": "git@github.com:alexey-shaposhnikov/backbone-idb.git#~0.2.9"
+  },
+  "devDependencies": {
+    "qunit": "~1.15.0",
+    "jquery-mockjax": "~1.6.0"
   }
 }

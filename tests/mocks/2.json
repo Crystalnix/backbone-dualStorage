@@ -1,0 +1,12 @@
+{
+  "id": 2,
+  "name": "Muhammad",
+  "age": 24,
+  "isReady": false,
+  "IQ": null,
+  "brothers": [
+    "A",
+    "B",
+    "C"
+  ]
+}

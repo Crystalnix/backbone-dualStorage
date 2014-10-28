@@ -1,0 +1,12 @@
+{
+  "id": 1,
+  "name": "John",
+  "age": 18,
+  "isReady": true,
+  "IQ": null,
+  "brothers": [
+    "A",
+    "B",
+    "C"
+  ]
+}

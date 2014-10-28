@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "John",
+    "age": 18,
+    "isReady": true,
+    "IQ": null,
+    "brothers": [
+      "A",
+      "B",
+      "C"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Muhammad",
+    "age": 24,
+    "isReady": false,
+    "IQ": null,
+    "brothers": [
+      "A",
+      "B",
+      "C"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Josef",
+    "age": 30,
+    "isReady": true,
+    "IQ": 110,
+    "brothers": []
+  },
+  {
+    "id": 4,
+    "name": "Bill",
+    "age": 36,
+    "isReady": false,
+    "IQ": 100,
+    "brothers": ["A"]
+  }
+]
