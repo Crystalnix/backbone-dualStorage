@@ -97,7 +97,7 @@
         originalSuccess(@, data, options)
         @trigger('sync', @, data, options);
         wrapError(@, options)
-        @save().done(=>event.trigger(@eventNames.SYNCHRONIZED))
+        @save().done(=>@fetch().done(=>event.trigger(@eventNames.SYNCHRONIZED)))
 
       syncError = (error) =>
         event.trigger(@eventNames.REMOTE_SYNC_FAIL, error, options)

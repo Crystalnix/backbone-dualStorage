@@ -139,7 +139,9 @@
           _this.trigger('sync', _this, data, options);
           wrapError(_this, options);
           return _this.save().done(function() {
-            return event.trigger(_this.eventNames.SYNCHRONIZED);
+            return _this.fetch().done(function() {
+              return event.trigger(_this.eventNames.SYNCHRONIZED);
+            });
           });
         };
       })(this);
