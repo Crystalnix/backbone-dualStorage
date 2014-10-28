@@ -6,6 +6,25 @@ function createCollection(callback) {
 
     var Collection = Backbone.DualCollection.extend({
         model: Model,
+
+        mergeFirstSync: function (newData) {
+            var data = [];
+            this.each(function (item) {
+                var id = item.get('id');
+                if (id) {
+                    var a = _.findWhere(newData, {id: id});
+                    var b = _.extend({}, item.toJSON(), a);
+                    delete b.status;
+                    data.push(b);
+                    newData = _.filter(newData, function (x) { return x.id !== id});
+                }
+                else {
+                    data.push(item.toJSON())
+                }
+            });
+            return _.union(data, newData);
+        },
+
         initialize: function () {
             this.indexedDB = new Backbone.IndexedDB({
                 storeName: 'test_' + $.now() + Math.random(),
@@ -30,26 +49,34 @@ function createCollection(callback) {
     });
 }
 
-//QUnit.asyncTest("Load remote data via first sync and existing local data", function (assert) {
-//    expect(3);
-//
-//    createCollection(function (collection) {
-//        $.mockjax({
-//            url: "/api/collection",
-//            proxy: 'mocks/all.json'
-//        });
-//        window.collection = collection;
-//        collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
-//            collection.indexedDB.store.deleteDatabase();
-//            assert.ok(collection.length === 4, "items were fetched");
-//            assert.ok(collection.get(1).get('name') === "John", "name is John");
-//            assert.ok(collection.get(1).get('IQ') === null, "IQ is null");
-//            QUnit.start();
-//            $.mockjax.clear()
-//        });
-//    });
-//
-//});
+QUnit.asyncTest("Load remote data via first sync and existing local data", function (assert) {
+    expect(3);
+
+    createCollection(function (collection) {
+        $.mockjax({
+            url: "/api/collection",
+            proxy: 'mocks/all.json'
+        });
+        var name = "IVAN";
+        var model1 = collection.create({name: name}, {wait: true});
+        model1.once('sync', function () {
+            var model2 = collection.create({id: 2, name: name}, {wait: true});
+            model2.once('sync', function () {
+                collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
+                    collection.indexedDB.store.deleteDatabase();
+                    assert.ok(collection.length === 5, "Items were fetched and merged");
+                    assert.ok(collection.get(1).get('name') === name, "Name is " + name);
+                    assert.ok(collection.get(2).get('name') !== name, "Name not is " + name);
+                    QUnit.start();
+                    $.mockjax.clear()
+                });
+            });
+        });
+
+
+    });
+
+});
 
 QUnit.asyncTest("Get delayed data", function (assert) {
     expect(1);
@@ -59,7 +86,7 @@ QUnit.asyncTest("Get delayed data", function (assert) {
             url: "/api/collection",
             proxy: 'mocks/all.json'
         });
-        window.collection = collection;
+        
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
             var dude = collection.get(1).toJSON();
             delete dude.id;
@@ -76,8 +103,7 @@ QUnit.asyncTest("Get delayed data", function (assert) {
                         model3.destroy().done(function () {
                             collection.fetch().done(function () {
                                 collection.getDelayedData().done(function (data) {
-                                    console.log(data);
-                                    assert.ok(data.length === 3, "It should be correct length");
+                                    assert.ok(data.length === 3, "Length should be correct ");
                                     QUnit.start();
                                     collection.indexedDB.store.deleteDatabase();
                                 });
@@ -101,7 +127,7 @@ QUnit.asyncTest("Load remote data via first sync", function (assert) {
             url: "/api/collection",
             proxy: 'mocks/all.json'
         });
-        window.collection = collection;
+        
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
             collection.indexedDB.store.deleteDatabase();
             assert.ok(collection.length === 4, "items were fetched");
@@ -122,7 +148,7 @@ QUnit.asyncTest("Creating the model", function (assert) {
             url: "/api/collection",
             proxy: 'mocks/all.json'
         });
-        window.collection = collection;
+        
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
             var dude = collection.get(1).toJSON();
             delete dude.id;
@@ -151,7 +177,7 @@ QUnit.asyncTest("Updating the new model", function (assert) {
             url: "/api/collection",
             proxy: 'mocks/all.json'
         });
-        window.collection = collection;
+        
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
             var dude = collection.get(1).toJSON();
             delete dude.id;
@@ -187,7 +213,7 @@ QUnit.asyncTest("Updating the existing model", function (assert) {
             url: "/api/collection",
             proxy: 'mocks/all.json'
         });
-        window.collection = collection;
+        
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
             var model = collection.get(1);
             var name = "Ivan";
@@ -218,7 +244,7 @@ QUnit.asyncTest("Deleting the model", function (assert) {
             url: "/api/collection",
             proxy: 'mocks/all.json'
         });
-        window.collection = collection;
+        
         collection.firstSync().once(collection.eventNames.SYNCHRONIZED, function () {
             var model = collection.get(1);
             var len = collection.length;
