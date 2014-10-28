@@ -34,6 +34,9 @@
   Backbone.DualModel = Backbone.Model.extend({
     states: states,
     remoteIdAttribute: 'id',
+    hasRemoteId: function() {
+      return !!this.get(this.remoteIdAttribute);
+    },
     getUrlForSync: function(urlRoot, method) {
       var remoteId;
       remoteId = this.get(this.remoteIdAttribute);
@@ -65,7 +68,9 @@
 
   Backbone.IndexedDB.prototype.update = function(model, options) {
     var data;
-    model.set('status', states.UPDATE_FAILED);
+    if (model.hasRemoteId()) {
+      model.set('status', states.UPDATE_FAILED);
+    }
     data = model.attributes;
     return this.store.put(data, options.success, options.error);
   };

@@ -26,6 +26,9 @@
 
     remoteIdAttribute: 'id',
 
+    hasRemoteId: () ->
+      !!@get(@remoteIdAttribute)
+
     getUrlForSync: (urlRoot, method) ->
       remoteId = @get(@remoteIdAttribute)
       if remoteId and method in ['update', 'delete']
@@ -47,7 +50,7 @@
     , options.error);
 
   Backbone.IndexedDB.prototype.update = (model, options) ->
-    model.set('status', states.UPDATE_FAILED)
+    if model.hasRemoteId() then model.set('status', states.UPDATE_FAILED)
     data = model.attributes
     @store.put(data, options.success, options.error);
 
