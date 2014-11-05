@@ -6,9 +6,7 @@
     "Alexey Shaposhnikov <shaposhnikov@crystalnix.com>"
   ],
   "description": "A dual (indexedDB and REST) sync adapter for Backbone.js",
-  "moduleType": [
-    "amd"
-  ],
+  "main": "backbone.dualstorage.js",
   "keywords": [
     "backbone",
     "indexeddb",
