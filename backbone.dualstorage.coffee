@@ -1,3 +1,30 @@
+((root, factory) ->
+  # Set up Backbone appropriately for the environment. Start with AMD.
+  if typeof define is "function" and define.amd
+    define [
+      "underscore"
+      "backbone"
+      "jquery"
+      "backbone-idb"
+    ], (_, Backbone, $) ->
+
+      # Export global even in AMD case in case this script is loaded with
+      # others that may still expect a global Backbone.
+
+      return factory($, _, Backbone)
+
+  # Next for Node.js or CommonJS. jQuery may not be needed as a module.
+  else if typeof exports isnt "undefined"
+    _ = require("underscore")
+    $ = require("jquery")
+    Backbone = require("backbone")
+    Backboneidb = require("backbone-idb")
+    module.exports = factory $, _, Backbone
+
+
+
+) @, ($, _, Backbone) ->
+
   CONSOLE_TAG = "backbone-dualStorage"
 
   states =
@@ -186,3 +213,4 @@
       @indexedDB.saveAll((-> deferred.resolve()), (-> deferred.reject()))
       do deferred.promise
 
+  Backbone
