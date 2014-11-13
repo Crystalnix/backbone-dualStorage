@@ -21,6 +21,8 @@
     Backboneidb = require("backbone-idb")
     module.exports = factory $, _, Backbone
 
+  else
+    factory(root.$ || root.jQuery, root._, root.Backbone)
 
 
 ) @, ($, _, Backbone) ->

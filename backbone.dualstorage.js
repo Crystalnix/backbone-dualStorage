@@ -12,6 +12,8 @@
       Backbone = require("backbone");
       Backboneidb = require("backbone-idb");
       return module.exports = factory($, _, Backbone);
+    } else {
+      return factory(root.$ || root.jQuery, root._, root.Backbone);
     }
   })(this, function($, _, Backbone) {
     var CONSOLE_TAG, eventNames, states, wrapError;
