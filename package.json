@@ -1,0 +1,29 @@
+{
+  "name": "backbone-dualStorage",
+  "version": "0.0.0",
+  "description": "A dual (indexedDB and REST) sync adapter for Backbone.js",
+  "main": "backbone.dualstorage.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Crystalnix/backbone-dualStorage.git"
+  },
+  "keywords": [
+    "backbone",
+    "indexeddb",
+    "rest",
+    "storage",
+    "local",
+    "synchronization"
+  ],
+  "author": "Alexey Shaposhnikov <shaposhnikov@crystalnix.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Crystalnix/backbone-dualStorage/issues"
+  }
+}
